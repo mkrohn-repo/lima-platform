@@ -1,0 +1,29 @@
+#name: vm-dhcp-bootp.yml
+
+vmType: vz
+arch: aarch64
+cpus: 4
+memory: "6GiB"
+disk: "20GiB"
+
+images:
+  - location: "file:///Users/mikron/exclude/iso/noble-server-cloudimg-arm64.img"
+    arch: "aarch64"
+
+# One NIC on a private host-only network (reachable from your Mac only)
+networks:
+  - lima: shared
+    macAddress: "02:00:00:00:aa:01"   # change per-VM as needed
+
+ssh:
+  loadDotSSHPubKeys: true
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux
+      apt-get update
+      apt-get install -y qemu-guest-agent openssh-server curl ca-certificates net-tools
+      apt-get full-upgrade -y 
+      systemctl enable --now ssh || systemctl enable --now sshd || true
