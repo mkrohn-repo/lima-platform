@@ -10,7 +10,18 @@ Lima configs for running Linux VMs on macOS (Apple Silicon), serving as a base f
 ## Building you lima environment
 
 > Requires: macOS 14+, Apple Silicon, Homebrew, Lima ≥ 1.2.x, and socket_vmnet
+
 > **Tested on:** Apple M3 Pro (12 cores, 36 GB RAM)
+
+## Usage 
+
+Clone:
+
+```bash
+git clone https://github.com/mkrohn-repo/lima-platform.git
+#or
+git clone git@github.com:mkrohn-repo/lima-platform.git
+```
 
 ```bash
 brew install lima
