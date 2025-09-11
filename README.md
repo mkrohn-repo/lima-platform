@@ -45,3 +45,8 @@ limactl delete vm-dhcp-bootp --force
 ```
 ## Roadmap
 - Automate creation of a 3-node cluster (kubeadm-ready) using Ansible + Make to tie it together
+
+## References
+- [Lima documentation](https://github.com/lima-vm/lima)  
+- [socket_vmnet (network helper)](https://github.com/lima-vm/socket_vmnet)
+- [Ubuntu Cloud Images (ARM64)](https://cloud-images.ubuntu.com/)
