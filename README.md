@@ -2,20 +2,36 @@
 
 Lima configs for running Linux VMs on macOS (Apple Silicon), serving as a base for Platform/SRE workflows and future Kubernetes clusters.
 
+> **Tested on:** Apple M3 Pro (12 cores, 36 GB RAM)
+
 ## Why Lima?
-- **Vms without the bloat** on macOS, without full hypervisor UX
+- **VMs without the bloat** on macOS, without full hypervisor UX
 - **Scriptable + reproducible** VM creation
 - **K8s-ready** foundation (multi-VM, custom networks, cloud-init)
 
-## Building you lima environment
+## Requirements
 
-> Requires: macOS 14+, Apple Silicon, Homebrew, Lima ≥ 1.2.x, and socket_vmnet
+- macOS 14+ 
+- Apple Silicon 
+- Homebrew
+- Lima ≥ 1.2.x 
+- socket_vmnet
 
-> **Tested on:** Apple M3 Pro (12 cores, 36 GB RAM)
+## Setup 
+install Lima with Homebrew
+```bash
+brew install lima
+limactl -v  # verify
+```
 
-## Usage 
+Create a working directory.  There is much to download:
+``` bash
+mkdir working_directory
+cd working_directory
+```
 
-Clone:
+
+Clone this repo:
 
 ```bash
 git clone https://github.com/mkrohn-repo/lima-platform.git
@@ -23,10 +39,6 @@ git clone https://github.com/mkrohn-repo/lima-platform.git
 git clone git@github.com:mkrohn-repo/lima-platform.git
 ```
 
-```bash
-brew install lima
-limactl -v  # verify
-```
 
 ### Installing socket_vmnet for network management (what worked for me).
 ```bash
@@ -43,19 +55,21 @@ rm etc_sudoers.d_lima
 ``` bash
 #run from repo root
 
-limactl create --name vm-dhcp-bootp ./lima-platform/poc/vm-dhcp-bootp.yml -y
+limactl create --name vm-dhcp-bootp ./poc/vm-dhcp-bootp.yml -y
 # remove -y if you want to edit the configuration interactively
 limactl start vm-dhcp-bootp
 limactl shell vm-dhcp-bootp
 ```
-## stop or delete a vm
+## Stop or delete a VM
 ``` bash
 limactl stop vm-dhcp-bootp
 limactl delete vm-dhcp-bootp
 limactl delete vm-dhcp-bootp --force
 ```
 ## Roadmap
-- Automate creation of a 3-node cluster (kubeadm-ready) using Ansible + Make to tie it together
+- Automate socket_vmnet install
+- Automate creation of a 3-node cluster (kubeadm-ready) using Ansible + Make 
+- Documentation on how Lima does user creation, and networking
 
 ## References
 - [Lima documentation](https://github.com/lima-vm/lima)  
