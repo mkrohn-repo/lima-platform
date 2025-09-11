@@ -7,8 +7,10 @@ memory: "6GiB"
 disk: "20GiB"
 
 images:
-  - location: "file:///Users/mikron/exclude/iso/noble-server-cloudimg-arm64.img"
+  - location: "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-arm64.img"
     arch: "aarch64"
+  # If there is a local copy  and you wish to use it
+  # - location: "file:///Users/USERNAME/path/to/noble-server-cloudimg-arm64.img"
 
 # Single bridged NIC , dhcp is from your router
 networks:
