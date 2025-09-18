@@ -9,18 +9,20 @@ REMOVE_SOCKET_VMNET_PLAYBOOK := ansible/remove_socket_vmnet.yml
 CREATE_FAKEDNS_PLAYBOOK := ansible/create_bootp_fakedns.yml
 DELETE_FAKEDNS_PLAYBOOK := ansible/remove_bootp_fakedns.yml
 
-.PHONY: help fakedns-install fakedns-delete bootp-install bootp-delete socket_vmnet_install socket_vmnet_remove  cluster-up cluster-start cluster-restart _run_any_playbook clean destroy nuke
+.PHONY: help fakedns-install fakedns-delete bootp-install bootp-delete socket_vmnet_install socket_vmnet_remove  cluster-up cluster-start cluster-restart _run_any_playbook mac-infra mac-infra-delete clean destroy nuke
 
-cluster-up: bootp-install socket_vmnet_install fakedns-install cluster-start cluster-restart 
+cluster-up: mac-infra cluster-start cluster-restart 
 
-clean: bootp-delete socket_vmnet_remove  fakedns-delete
+clean: mac-infra-delete
 
 destroy: cluster-destroy fakedns-delete
 
-nuke: destroy clean
+nuke: cluster-destroy mac-infra-delete 
 
 help:
 	@echo "Targets:"
+	@echo "  make mac-infra # runs $(CREATE_FAKEDNS_PLAYBOOK) $(CREATE_BOOTP_PLAYBOOK) and $(INSTALL_SOCKET_VMNET_PLAYBOOK) in a fresh venv"
+	@echo "  make mac-infra-delete # runs $(DELETE_FAKEDNS_PLAYBOOK) $(DELETE_BOOTP_PLAYBOOK) and $(INSTALL_SOCKET_VMNET_PLAYBOOK) in a fresh venv"
 	@echo "  make fakedns-install   # runs $(CREATE_FAKEDNS_PLAYBOOK) in a fresh venv"
 	@echo "  make fakedns-delete    # runs $(DELETE_FAKEDNS_PLAYBOOK) in a fresh venv"
 	@echo "  make bootp-install   # runs $(CREATE_BOOTP_PLAYBOOK) in a fresh venv"
@@ -55,6 +57,12 @@ cluster-destroy:
 		limactl delete $$n --force; \
 	done
 
+mac-infra:
+	@$(MAKE) _run_any_playbook PLAYBOOK="$(CREATE_FAKEDNS_PLAYBOOK) $(CREATE_BOOTP_PLAYBOOK) $(INSTALL_SOCKET_VMNET_PLAYBOOK)"
+
+mac-infra-delete:
+	@$(MAKE) _run_any_playbook PLAYBOOK="$(DELETE_FAKEDNS_PLAYBOOK) $(DELETE_BOOTP_PLAYBOOK) $(REMOVE_SOCKET_VMNET_PLAYBOOK)"
+
 fakedns-install:
 	@$(MAKE) _run_any_playbook PLAYBOOK="$(CREATE_FAKEDNS_PLAYBOOK)"
 
@@ -87,4 +95,4 @@ _run_any_playbook:
 	python -m pip install --upgrade pip >/dev/null; \
 	pip install --quiet ansible >/dev/null; \
 	echo "[*] Running ansible-playbook -K $(PLAYBOOK)"; \
-	ansible-playbook -K "$(PLAYBOOK)"
+	ansible-playbook -K $(PLAYBOOK)
