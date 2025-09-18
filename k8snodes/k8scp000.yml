@@ -1,0 +1,32 @@
+# Lima configuration (k8sc000)
+vmType: vz            # use "qemu" if your host can't use Apple Virtualization
+cpus: 2
+memory: 2GiB
+disk: 20GiB
+
+images:
+  - location: "file:///Users/mikron/exclude/iso/noble-server-cloudimg-arm64.img"
+    arch: "aarch64"
+
+networks:
+  - lima: shared
+    macAddress: "de:ad:be:ef:00:01"   # must match /etc/bootptab
+ssh:
+  loadDotSSHPubKeys: true    
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux
+      NODE_NAME="${NODE_NAME:-k8sc000}"
+      apt-get update
+      apt-get install -y qemu-guest-agent openssh-server curl ca-certificates net-tools
+      apt-get full-upgrade -y
+      systemctl enable --now ssh || systemctl enable --now sshd || true
+      hostnamectl set-hostname "$NODE_NAME"
+      grep -q '192\.168\.105\.101 k8sc000' /etc/hosts || cat >> /etc/hosts <<EOF
+      192.168.105.101 k8sc000
+      192.168.105.102 k8sw000
+      192.168.105.103 k8sw001
+      EOF   
