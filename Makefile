@@ -1,5 +1,6 @@
 # Makefile: manages socket_vmnet, bootp, k8s clusters
 
+.DEFAULT_GOAL := help
 NODES := k8scp000 k8sw000 k8sw001
 PYTHON ?= python3
 CREATE_BOOTP_PLAYBOOK := ansible/create_bootp.yml
@@ -95,4 +96,7 @@ _run_any_playbook:
 	python -m pip install --upgrade pip >/dev/null; \
 	pip install --quiet ansible >/dev/null; \
 	echo "[*] Running ansible-playbook -K $(PLAYBOOK)"; \
-	ansible-playbook -K $(PLAYBOOK)
+	ansible-playbook -K $(PLAYBOOK); \
+	pip cache purge >/dev/null 2>&1 || true; \
+	rm -rf $$VENV_DIR; \
+	find $$HOME/Library/Caches/com.apple.python/private/var/folders -type d -iname "ansible-venv-XXXXXX.*"  -exec rm -rf {} + >/dev/null 2>&1 || true
