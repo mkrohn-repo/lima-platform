@@ -8,12 +8,14 @@ When you launch a Lima VM with this configuration, the guest user account is cre
 
 This is not custom to our setup — it is Lima’s **default behavior**.
 
----
+______________________________________________________________________
 
 ## How it works
 
-- At first boot, Lima builds a small ISO (`cidata.iso`) that contains [cloud-init](https://cloud-init.io/) configuration.  
+- At first boot, Lima builds a small ISO (`cidata.iso`) that contains [cloud-init](https://cloud-init.io/) configuration.
+
 - Inside this, the `user-data` template from the Lima project tells cloud-init to:
+
   - Create a user with your **host username** and **UID/GID**.
   - Allow that user to run `sudo` without being asked for a password.
   - Lock the account password (so login is only via key).
@@ -25,11 +27,12 @@ This is not custom to our setup — it is Lima’s **default behavior**.
   ```
 
 This ensures:
+
 - File ownership lines up correctly between host and VM when you mount directories.
 - You can SSH in right away with your existing keys.
 - You don’t need to set or type a password.
 
----
+______________________________________________________________________
 
 ## Reference: Lima default `user-data`
 
@@ -44,4 +47,4 @@ users:
   - "{{.SSHAuthorizedKeys}}"
   sudo: ALL=(ALL) NOPASSWD:ALL
   lock_passwd: true
- ```
+```
