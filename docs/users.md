@@ -43,3 +43,4 @@ users:
   - "{{.SSHAuthorizedKeys}}"
   sudo: ALL=(ALL) NOPASSWD:ALL
   lock_passwd: true
+ ```
