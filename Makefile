@@ -12,7 +12,7 @@ DELETE_FAKEDNS_PLAYBOOK := ansible/remove_bootp_fakedns.yml
 
 .PHONY: help fakedns-install fakedns-delete bootp-install bootp-delete socket_vmnet_install socket_vmnet_remove  cluster-up cluster-start cluster-restart _run_any_playbook mac-infra mac-infra-delete clean destroy nuke
 
-cluster-up: mac-infra cluster-start cluster-restart 
+cluster-up: mac-infra cluster-create cluster-restart 
 
 clean: mac-infra-delete
 
@@ -30,18 +30,26 @@ help:
 	@echo "  make bootp-delete    # runs $(DELETE_BOOTP_PLAYBOOK) in a fresh venv"
 	@echo "  make socket_vmnet_install    # runs $(INSTALL_SOCKET_VMNET_PLAYBOOK) in a fresh venv"
 	@echo "  make socket_vmnet_remove    # runs $(REMOVE_SOCKET_VMNET_PLAYBOOK) in a fresh venv"
-	@echo "  make cluster-start # creates a 3 node cluster, but boes not install k8s"
 	@echo "  make cluster-restart # restarts a 3 node cluster"
-	@echo "  make cluster-up  # provisons a 3 node cluster, including a restart to update to latest kernel"
+	@echo "  make cluster-start # starts an existing 3 node cluster"
+	@echo "  make cluster-create  # provisons a 3 node cluster
+	@echo "  make cluster-up  # provisons a 3 node cluster, including socket_vmnet, a dhcp configuration for the VM's and a restart to update to latest kernel"
 	@echo "  make clean #runs $(DELETE_BOOTP_PLAYBOOK) and $(REMOVE_SOCKET_VMNET_PLAYBOOK) "
-	@echo "  make destroy # deletes the cluster provisioned in cluster-start"
+	@echo "  make destroy # deletes the cluster provisioned in cluster-create
 	@echo "  make nuke #deletes socket_vmnet, bootp, all VM's"
+
+cluster-create:
+	@set -e; \
+	for n in $(NODES); do \
+		echo "Starting $$n..."; \
+		limactl start --name $$n k8snodes/$$n.yml -y; \
+	done
 
 cluster-start:
 	@set -e; \
 	for n in $(NODES); do \
 		echo "Starting $$n..."; \
-		limactl start --name $$n k8snodes/$$n.yml -y; \
+		limactl start $$n; \
 	done
 
 cluster-restart:
@@ -49,6 +57,13 @@ cluster-restart:
 	for n in $(NODES); do \
 		echo "Restarting $$n..."; \
 		limactl restart $$n; \
+	done
+
+cluster-stop:
+	@set -e; \
+	for n in $(NODES); do \
+		echo "Stopping $$n..."; \
+		limactl stop $$n; \
 	done
 
 cluster-destroy:
