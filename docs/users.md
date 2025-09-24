@@ -18,6 +18,7 @@ This is not custom to our setup — it is Lima’s **default behavior**.
   - Allow that user to run `sudo` without being asked for a password.
   - Lock the account password (so login is only via key).
   - Copy your host SSH public keys into that user’s `~/.ssh/authorized_keys` if this condition is met:
+
   ```yaml
   ssh:
   loadDotSSHPubKeys: true    
