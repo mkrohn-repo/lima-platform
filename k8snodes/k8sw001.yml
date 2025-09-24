@@ -1,5 +1,5 @@
 # Lima configuration (k8scp000)
-vmType: vz            # use "qemu" if your host can't use Apple Virtualization
+vmType: vz
 cpus: 2
 memory: 4GiB
 disk: 20GiB
