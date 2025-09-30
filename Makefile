@@ -9,8 +9,12 @@ INSTALL_SOCKET_VMNET_PLAYBOOK := ansible/install_socket_vmnet.yml
 REMOVE_SOCKET_VMNET_PLAYBOOK := ansible/remove_socket_vmnet.yml
 CREATE_FAKEDNS_PLAYBOOK := ansible/create_bootp_fakedns.yml
 DELETE_FAKEDNS_PLAYBOOK := ansible/remove_bootp_fakedns.yml
+INSTALL_K8S:= ansible/create_kubeadm_cluster.yml
+INVENTORY_FILE ?= ansible/inventory.ini
+ANSIBLE_HOST_KEY_CHECKING ?= False
+ANSIBLE_SSH_ARGS ?= -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 
-.PHONY: help fakedns-install fakedns-delete bootp-install bootp-delete socket_vmnet_install socket_vmnet_remove  cluster-up cluster-start cluster-restart _run_any_playbook mac-infra mac-infra-delete clean destroy nuke
+.PHONY: help fakedns-install fakedns-delete bootp-install bootp-delete socket_vmnet_install socket_vmnet_remove  cluster-up cluster-start cluster-restart _run_local_mac_playbook mac-infra mac-infra-delete clean destroy nuke install-k8s
 
 cluster-up: mac-infra cluster-create cluster-restart 
 
@@ -19,6 +23,7 @@ clean: mac-infra-delete
 destroy: cluster-destroy fakedns-delete
 
 nuke: cluster-destroy mac-infra-delete 
+
 
 help:
 	@echo "Targets:"
@@ -74,30 +79,33 @@ cluster-destroy:
 	done
 
 mac-infra:
-	@$(MAKE) _run_any_playbook PLAYBOOK="$(CREATE_FAKEDNS_PLAYBOOK) $(CREATE_BOOTP_PLAYBOOK) $(INSTALL_SOCKET_VMNET_PLAYBOOK)"
+	@$(MAKE) _run_local_mac_playbook PLAYBOOK="$(CREATE_FAKEDNS_PLAYBOOK) $(CREATE_BOOTP_PLAYBOOK) $(INSTALL_SOCKET_VMNET_PLAYBOOK)"
 
 mac-infra-delete:
-	@$(MAKE) _run_any_playbook PLAYBOOK="$(DELETE_FAKEDNS_PLAYBOOK) $(DELETE_BOOTP_PLAYBOOK) $(REMOVE_SOCKET_VMNET_PLAYBOOK)"
+	@$(MAKE) _run_local_mac_playbook PLAYBOOK="$(DELETE_FAKEDNS_PLAYBOOK) $(DELETE_BOOTP_PLAYBOOK) $(REMOVE_SOCKET_VMNET_PLAYBOOK)"
 
 fakedns-install:
-	@$(MAKE) _run_any_playbook PLAYBOOK="$(CREATE_FAKEDNS_PLAYBOOK)"
+	@$(MAKE) _run_local_mac_playbook PLAYBOOK="$(CREATE_FAKEDNS_PLAYBOOK)"
 
 fakedns-delete:
-	@$(MAKE) _run_any_playbook PLAYBOOK="$(DELETE_FAKEDNS_PLAYBOOK)"
+	@$(MAKE) _run_local_mac_playbook PLAYBOOK="$(DELETE_FAKEDNS_PLAYBOOK)"
 
 bootp-install:
-	@$(MAKE) _run_any_playbook PLAYBOOK="$(CREATE_BOOTP_PLAYBOOK)"
+	@$(MAKE) _run_local_mac_playbook PLAYBOOK="$(CREATE_BOOTP_PLAYBOOK)"
 
 bootp-delete:
-	@$(MAKE) _run_any_playbook PLAYBOOK="$(DELETE_BOOTP_PLAYBOOK)"
+	@$(MAKE) _run_local_mac_playbook PLAYBOOK="$(DELETE_BOOTP_PLAYBOOK)"
 
 socket_vmnet_install:
-	@$(MAKE) _run_any_playbook PLAYBOOK="$(INSTALL_SOCKET_VMNET_PLAYBOOK)"
+	@$(MAKE) _run_local_mac_playbook PLAYBOOK="$(INSTALL_SOCKET_VMNET_PLAYBOOK)"
 
 socket_vmnet_remove:	
-	@$(MAKE) _run_any_playbook PLAYBOOK="$(REMOVE_SOCKET_VMNET_PLAYBOOK)"
+	@$(MAKE) _run_local_mac_playbook PLAYBOOK="$(REMOVE_SOCKET_VMNET_PLAYBOOK)"
 
-_run_any_playbook:
+install-k8s: 
+	@$(MAKE) _run_k8s_playbook PLAYBOOK="$(INSTALL_K8S) -i $(INVENTORY_FILE)"
+
+_run_local_mac_playbook:
 	@set -euo pipefail; \
 	if ! command -v $(PYTHON) >/dev/null 2>&1; then \
 	  echo "ERROR: $(PYTHON) not found. Install Python 3 and retry." >&2; exit 1; \
@@ -112,6 +120,26 @@ _run_any_playbook:
 	pip install --quiet ansible >/dev/null; \
 	echo "[*] Running ansible-playbook -K $(PLAYBOOK)"; \
 	ansible-playbook -K $(PLAYBOOK); \
+	pip cache purge >/dev/null 2>&1 || true; \
+	rm -rf $$VENV_DIR; \
+	find $$HOME/Library/Caches/com.apple.python/private/var/folders -type d -iname "ansible-venv-XXXXXX.*"  -exec rm -rf {} + >/dev/null 2>&1 || true
+
+
+_run_k8s_playbook:
+	@set -euo pipefail; \
+	if ! command -v $(PYTHON) >/dev/null 2>&1; then \
+	  echo "ERROR: $(PYTHON) not found. Install Python 3 and retry." >&2; exit 1; \
+	fi; \
+	VENV_DIR=$$(mktemp -d -t ansible-venv-XXXXXX); \
+	trap 'rm -rf "$$VENV_DIR"' EXIT INT TERM; \
+	echo "[*] Creating venv at $$VENV_DIR"; \
+	$(PYTHON) -m venv "$$VENV_DIR"; \
+	. "$$VENV_DIR/bin/activate"; \
+	echo "[*] Upgrading pip and installing ansible..."; \
+	python -m pip install --upgrade pip >/dev/null; \
+	pip install --quiet ansible >/dev/null; \
+	echo "[*] Running ansible-playbook $(PLAYBOOK)"; \
+	ansible-playbook  $(PLAYBOOK); \
 	pip cache purge >/dev/null 2>&1 || true; \
 	rm -rf $$VENV_DIR; \
 	find $$HOME/Library/Caches/com.apple.python/private/var/folders -type d -iname "ansible-venv-XXXXXX.*"  -exec rm -rf {} + >/dev/null 2>&1 || true
