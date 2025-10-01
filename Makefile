@@ -14,16 +14,7 @@ INVENTORY_FILE ?= ansible/inventory.ini
 ANSIBLE_HOST_KEY_CHECKING ?= False
 ANSIBLE_SSH_ARGS ?= -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 
-.PHONY: help fakedns-install fakedns-delete bootp-install bootp-delete socket_vmnet_install socket_vmnet_remove  cluster-up cluster-start cluster-restart _run_local_mac_playbook mac-infra mac-infra-delete clean destroy nuke install-k8s
-
-cluster-up: mac-infra cluster-create cluster-restart 
-
-clean: mac-infra-delete
-
-destroy: cluster-destroy fakedns-delete
-
-nuke: cluster-destroy mac-infra-delete 
-
+.PHONY: help fakedns-install fakedns-delete bootp-install bootp-delete socket_vmnet_install socket_vmnet_remove  cluster cluster-start cluster-stop cluster-restart _run_local_mac_playbook mac-infra mac-infra-delete clean install-k8s cluster-kube
 
 help:
 	@echo "Targets:"
@@ -37,11 +28,18 @@ help:
 	@echo "  make socket_vmnet_remove    # runs $(REMOVE_SOCKET_VMNET_PLAYBOOK) in a fresh venv"
 	@echo "  make cluster-restart # restarts a 3 node cluster"
 	@echo "  make cluster-start # starts an existing 3 node cluster"
-	@echo "  make cluster-create  # provisions a 3 node cluster
-	@echo "  make cluster-up  # provisions a 3 node cluster, including socket_vmnet, a dhcp configuration for the VM's and a restart to update to latest kernel"
-	@echo "  make clean #runs $(DELETE_BOOTP_PLAYBOOK) and $(REMOVE_SOCKET_VMNET_PLAYBOOK) "
-	@echo "  make destroy # deletes the cluster provisioned in cluster-create
-	@echo "  make nuke #deletes socket_vmnet, bootp, all VM's"
+	@echo "  make cluster-stop # stops an existing 3 node cluster"
+	@echo "  make cluster-create  # provisions a 3 node cluster"
+	@echo "  make install-k8s # creates a 3 node kubernetes cluster with kubeadm"
+	@echo "  make cluster  # provisions a 3 node cluster, including socket_vmnet, a dhcp configuration for the VM's and a restart to update to latest kernel"
+	@echo "  make cluster-kube # provisions a 3 node cluster with kubeadm
+	@echo "  make clean # deletes socket_vmnet, bootp, all VM's"
+
+cluster: mac-infra cluster-create cluster-restart 
+
+cluster-kube: cluster install-k8s
+
+clean:  cluster-destroy mac-infra-delete 
 
 cluster-create:
 	@set -e; \
@@ -123,7 +121,6 @@ _run_local_mac_playbook:
 	pip cache purge >/dev/null 2>&1 || true; \
 	rm -rf $$VENV_DIR; \
 	find $$HOME/Library/Caches/com.apple.python/private/var/folders -type d -iname "ansible-venv-XXXXXX.*"  -exec rm -rf {} + >/dev/null 2>&1 || true
-
 
 _run_k8s_playbook:
 	@set -euo pipefail; \
