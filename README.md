@@ -1,6 +1,6 @@
 # Lima Platform (Apple Silicon VM Automation)
 
-Lima configs for running Linux VMs on macOS (Apple Silicon), serving as a base for Platform/SRE workflows and future Kubernetes clusters.
+Lima configurations that run Linux VMs on macOS (Apple Silicon). A starting point for Platform/SRE workflows and future Kubernetes clusters.
 
 > **Tested on:** Apple M3 Pro (12 cores, 36 GB RAM)
 
@@ -42,17 +42,39 @@ git clone git@github.com:mkrohn-repo/lima-platform.git
 # if you are creating a k8s cluster there is to need to run this step.
 # It is only needed if you are running a single vm 
 # make help for a full list of options
-cd lima-platform/ 
+cd lima-platform/
 make socket_vmnet_install 
 ```
 
 ## Create a 3 node cluster, but no k8s
 
 ```bash
-#run from repo root
 # make help for a full list of options
-make cluster-create
+cd lima-platform/
+make cluster #Installs socket_vmnet, adds hostnames to /etc/hosts, add a bootptab file for dhcp,  creates a 3 node cluster, updates packages and reboots
 ```
+
+## Create a 3 node kubeadm managed kubernetes cluster
+
+```bash
+# make help for a full list of options
+cd lima-platform/
+make cluster-kube # Installs socket_vmnet, adds hostnames to /etc/hosts, add a bootptab file for dhcp,  creates a 3 node cluster, updates packages, reboots and installs kubernetes with kubeadm
+ssh k8sc000 # Welcome to your cluster!
+watch "kubectl get pod -A" # it takes about 8 min for you cluster to be ready
+```
+
+## Start, Stop, or Restart your cluster
+
+```bash
+# make help for a full list of options
+cd lima-platform/
+make cluster-start
+make cluster-stop
+make cluster-restart
+```
+
+## Use your new Kubernetes cluster
 
 ## Spin up a VM
 
@@ -75,8 +97,9 @@ limactl delete vm-dhcp-bootp --force
 
 ## Roadmap
 
-- Automate creation of a 3-node k8s cluster using Ansible + Make
-- Documentation on how Lima does user creation, and networking
+- Simplify current Makefile target rules
+- UTM Compatibility/Co-existance
+- Ansible refactor
 
 ## References
 
