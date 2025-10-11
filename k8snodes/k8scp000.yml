@@ -21,14 +21,14 @@ provision:
     script: |
       #!/bin/bash
       set -eux
-      NODE_NAME="${NODE_NAME:-k8sc000}"
+      NODE_NAME="${NODE_NAME:-k8scp000}"
       apt-get update
       apt-get install -y qemu-guest-agent openssh-server curl ca-certificates net-tools
       apt-get full-upgrade -y
       systemctl enable --now ssh || systemctl enable --now sshd || true
       hostnamectl set-hostname "$NODE_NAME"
-      grep -q '192\.168\.105\.101 k8sc000' /etc/hosts || cat >> /etc/hosts <<EOF
-      192.168.105.101 k8sc000
+      grep -q '192\.168\.105\.101 k8scp000' /etc/hosts || cat >> /etc/hosts <<-EOF
+      192.168.105.101 k8scp000
       192.168.105.102 k8sw000
       192.168.105.103 k8sw001
       EOF   
