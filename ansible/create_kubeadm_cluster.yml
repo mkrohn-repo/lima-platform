@@ -158,7 +158,6 @@
         creates: /etc/kubernetes/admin.conf
       become: true
 
-
     - name: Ensure ~/.kube exists
       ansible.builtin.file:
         path: "{{ kube_home }}/.kube"
@@ -195,10 +194,53 @@
       set_fact:
         global_join_command: "{{ joincmd.stdout }}"
 
+    - name: Ensure serverTLSBootstrap
+      ansible.builtin.lineinfile:
+        path: /var/lib/kubelet/config.yaml
+        regexp: '^serverTLSBootstrap:'
+        line: 'serverTLSBootstrap: true'
+        insertafter: EOF
+        backup: yes
+      become: true
+
+    - name: Restart kubelet to trigger serving CSR
+      ansible.builtin.systemd:
+        name: kubelet
+        state: restarted
+        enabled: true
+      become: true
+
 - hosts: workers
   become: true
   tasks:
     - name: Join worker to cluster
       shell: "{{ hostvars[groups['control_plane'][0]].global_join_command }}"
       args:
-        executable: /bin/bash        
+        executable: /bin/bash
+
+    - name: Ensure serverTLSBootstrap (worker)
+      ansible.builtin.lineinfile:
+        path: /var/lib/kubelet/config.yaml
+        regexp: '^serverTLSBootstrap:'
+        line: 'serverTLSBootstrap: true'
+        insertafter: EOF
+        backup: yes
+
+    - name: Restart kubelet to trigger serving CSR (worker)
+      ansible.builtin.systemd:
+        name: kubelet
+        state: restarted
+        enabled: true
+
+- hosts: control_plane
+  become: false
+  tasks:
+    - name: Wait 90 sec for CSRs
+      ansible.builtin.pause:
+        seconds: 90
+
+    - name: Approve pending kubelet-serving CSRs without any regard to finesse
+      ansible.builtin.shell: |
+        set -euo pipefail
+        for a in `kubectl get csr -o name` ; do kubectl certificate approve  $a; done
+      args: { executable: /bin/bash }
